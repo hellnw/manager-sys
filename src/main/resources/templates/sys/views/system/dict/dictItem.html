@@ -1,0 +1,210 @@
+<div class="layui-fluid layui-anim sys-anim" id="sys-dict-item" lay-title="字典管理">
+    <div class="layui-row layui-col-space8 sys-container">
+        <div class="layui-col-md7 layui-col-sm6 layui-col-xs12">
+            <div class="layui-card">
+                <div class="layui-card-body sys-table-full">
+                    <form class="layui-form layui-table-form" lay-filter="dict-item-table-form" id="dict-item-table-form">
+                        <div class="layui-row">
+                            <div class="layui-col-md9 layui-col-sm9 layui-col-xs9">
+                                <div class="layui-form-item">
+                                    <div class="layui-inline">
+                                        <label class="layui-form-label layui-form-label-sm">字典名称</label>
+                                        <div class="layui-input-inline">
+                                            <input type="text" name="name" autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-form-item sys-hide">
+                                    <div class="layui-inline">
+                                        <label class="layui-form-label layui-form-label-sm">字典名称</label>
+                                        <div class="layui-input-inline">
+                                            <input type="text" name="dictId" class="layui-input" th:value="${dictId}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="layui-col-md3 layui-col-sm12 layui-col-xs12 table-action-area">
+                                <div class="layui-btn layui-btn-sm layui-btn-primary table-action" id="query">
+                                    <i class="layui-icon">&#xe848;</i>
+                                </div>
+                                <div class="layui-btn layui-btn-sm layui-btn-primary table-action" id="reset">
+                                    <i class="layui-icon">&#xe79b;</i>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <table lay-filter="dictItemTable" lay-data="{id: 'dictItemTable'}"></table>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md5 layui-col-sm6 layui-col-xs12">
+            <div class="layui-card">
+                <div class="layui-card-header" id="dict-item-form-header">新增字典</div>
+                <div class="layui-card-body sys-table-full">
+                    <form class="layui-form layui-table-form" action="" lay-filter="dict-item-form">
+                        <div class="layui-form-item sys-hide">
+                            <label class="layui-form-label sys-form-item-require">字典主键：</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="id" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item sys-hide">
+                            <label class="layui-form-label sys-form-item-require">字典外键：</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="dictId" class="layui-input" th:value="${dictId}"/>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label sys-form-item-require">字典编码：</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="code" autocomplete="off" class="layui-input" minlength="2"
+                                       maxlength="20" lay-verify="range">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label sys-form-item-require">字典名称：</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="name" autocomplete="off" class="layui-input" minlength="2"
+                                       maxlength="20" lay-verify="range">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">字典描述：</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="descript" autocomplete="off" class="layui-input" minlength="2"
+                                       maxlength="20">
+                            </div>
+                        </div>
+                        <div class="layui-form-item sys-hide">
+                            <button type="reset" class="layui-btn" id="reset-form"></button>
+                            <button class="layui-btn" lay-submit="" lay-filter="dict-item-form-submit"
+                                    id="submit-form"></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="layui-card-footer">
+                    <button class="layui-btn" id="dict-item-submit">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="dict-item-option">
+    <span shiro:lacksPermission="dictitem:update,dictitem:delete">
+        <span class="layui-badge-dot sys-bg-orange"></span> 无权限
+    </span>
+    <a lay-event="edit" shiro:hasPermission="dictitem:update"><i class="layui-icon sys-edit-area sys-blue">&#xe7a4;</i></a>
+    <a lay-event="del" shiro:hasPermission="dictitem:delete"><i class="layui-icon sys-edit-area sys-red">&#xe7f9;</i></a>
+</script>
+<script data-th-inline="none" type="text/javascript">
+    layui.use(['dropdown', 'jquery', 'laydate', 'sys', 'form', 'eleTree', 'table', 'validate'], function () {
+        var $ = layui.jquery,
+            laydate = layui.laydate,
+            sys = layui.sys,
+            form = layui.form,
+            table = layui.table,
+            eleTree = layui.eleTree,
+            dropdown = layui.dropdown,
+            validate = layui.validate,
+            $view = $('#sys-dict-item'),
+            $query = $view.find('#query'),
+            $reset = $view.find('#reset'),
+            $submit = $view.find('#dict-item-submit'),
+            $searchForm = $view.find('#dict-item-table-form'),
+            $header = $view.find('#dict-item-form-header'),
+            tableIns;
+
+        form.verify(validate);
+        form.render();
+
+        initTable();
+
+        table.on('tool(dictItemTable)', function (obj) {
+            var data = obj.data,
+                layEvent = obj.event;
+            if (layEvent === 'edit') {
+                $header.text('修改字典');
+                form.val("dict-item-form", {
+                    "id": data.id,
+                    "code": data.code,
+                    "name": data.name,
+                    "descript": data.descript
+                });
+            }
+            if (layEvent === 'del') {
+                sys.modal.confirm('删除字典', '确定删除该字典？', function () {
+                    deleteDictItems(data.id);
+                });
+            }
+        });
+
+        $query.on('click', function () {
+            resetDictItemForm();
+            tableIns.reload({where: getQueryParams(), page: {curr: 1}});
+        });
+
+        $reset.on('click', function () {
+            resetDictItemForm();
+            $searchForm[0].reset();
+            tableIns.reload({where: getQueryParams(), page: {curr: 1}});
+        });
+
+        $submit.on('click', function () {
+            $view.find('#submit-form').trigger('click');
+        });
+
+        function initTable() {
+            tableIns = sys.table.init({
+                elem: $view.find('table'),
+                id: 'dictItemTable',
+                url: ctx + 'dictitem/list?dictId=' + $searchForm.find('input[name="dictId"]').val(),
+                cols: [[
+                    {type: 'checkbox'},
+                    {field: 'code', title: '字典编码'},
+                    {field: 'name', title: '字典名称', minWidth: 120},
+                    {field: 'descript', title: '字典描述', minWidth: 180},
+                    {title: '操作', toolbar: '#dict-item-option', width: 100}
+                ]]
+            });
+        }
+
+        function getQueryParams() {
+            return {
+                name: $searchForm.find('input[name="name"]').val().trim(),
+                dictId: $searchForm.find('input[name="dictId"]').val(),
+                invalidate_ie_cache: new Date()
+            };
+        }
+
+        function resetDictItemForm() {
+            $view.find('#reset-form').trigger('click');
+            $header.text('新增字典');
+        }
+
+        form.on('submit(dict-item-form-submit)', function (data) {
+            addOrUpdateDictItem(data.field);
+            return false;
+        });
+
+        function deleteDictItems(dictItemIds) {
+            sys.get(ctx + 'dictitem/delete/' + dictItemIds, null, function () {
+                sys.alert.success('删除字典成功');
+                $query.trigger('click');
+            })
+        }
+
+        var addOrUpdateDictItem = function (data) {
+            if (data.id && $header.text() === '修改字典') {
+                sys.post(ctx + 'dictitem/update', data, function () {
+                    sys.alert.success('修改字典成功');
+                    $query.trigger('click');
+                });
+            } else {
+                sys.post(ctx + 'dictitem', data, function () {
+                    sys.alert.success('新增字典成功');
+                    $query.trigger('click');
+                });
+            }
+        }
+    });
+</script>
